@@ -23,7 +23,7 @@ class get_spotify_playlist():
         
         c = conn.cursor()
         c.execute(f'''CREATE TABLE IF NOT EXISTS {table_name}
-                 ([id] INTEGER PRIMARY KEY,
+                 ([index] INTEGER PRIMARY KEY,
                  [song_name] text, 
                  [song_id] text,
                  [popularity] integer,
@@ -52,7 +52,7 @@ class get_spotify_playlist():
     @staticmethod
     def SQL_to_dataframe(table_name):
         '''takes in SQL table_name and converts to pandas dataframe, returning the head of the dataframe'''
-        df = pd.read_sql_query(f"SELECT * FROM {table_name}", conn, index_col='id')
+        df = pd.read_sql_query(f"SELECT * FROM {table_name}", conn, index_col='index')
         return df    
    
 
@@ -66,13 +66,17 @@ class get_spotify_playlist():
             formatted = (",".join(song_ids))
             resp = requests.get(f'https://api.spotify.com/v1/audio-features?ids={formatted}', headers = self.headers)
             data_json = resp.json()
-            
+            #print(data_json)
             for i in data_json['audio_features']:
-                c.execute(f'''UPDATE {table_name} 
-                              SET speechiness = ?, 
-                                  danceability = ?
-                              WHERE song_id = ?''', (i['speechiness'], i['danceability'], i['id']))
-                conn.commit()
+                #print(i['speechiness'], i['danceability'], i['id'])
+                try:
+                    c.execute(f'''UPDATE {table_name} 
+                                  SET speechiness = ?, 
+                                      danceability = ?
+                                  WHERE song_id = ?''', (i['speechiness'], i['danceability'], i['id']))
+                    conn.commit()
+                except:
+                    print(i)
          
             return get_spotify_playlist.SQL_to_dataframe(f'{table_name}')
         
