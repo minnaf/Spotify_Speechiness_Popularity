@@ -1,11 +1,9 @@
 import requests
 import json
 import pandas as pd 
-import numpy as np
 import sqlite3
-import math
 
-conn = sqlite3.connect('spotify.db')
+conn = sqlite3.connect('spotify2.db')
 c = conn.cursor()
 
 
@@ -15,13 +13,13 @@ class get_spotify_playlist():
         self.headers_value = OAuth_token
         self.headers = {'Authorization':f'Bearer {self.headers_value}'}
         
-    def get_playlist_SQL(self, playlist_id, table_name):
+    def get_album_SQL(self, album_id, table_name):
         '''takes in playlist_id and pulls from API, and returns SQL database '''
         #headers_value = OAuth_token
         #headers = 
-        resp = requests.get(f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks?offset=0&limit=100', headers = self.headers)
+        resp = requests.get(f'https://api.spotify.com/v1/albums/{album_id}/tracks', headers = self.headers)
         data_json = resp.json()
-        #return data_json
+        
         
         c = conn.cursor()
         c.execute(f'''CREATE TABLE IF NOT EXISTS {table_name}
@@ -38,8 +36,8 @@ class get_spotify_playlist():
             c.execute(f'''INSERT INTO {table_name} 
                     (song_name, song_id, popularity, artist_name)
                     VALUES(?,?,?,?)''', 
-                    (i['track']['name'],
-                     i['track']['id'],
+                    (i['name'],
+                     i['id'],
                      i['track']['popularity'],
                      i['track']['artists'][0]['name']))
     
@@ -65,28 +63,29 @@ class get_spotify_playlist():
         
         
         #if len(song_ids) < 100:
-        for i in range(0, math.ceil(len(song_ids)/100)):
+        for i in range(0, (len(song_ids) // 100)):
             abbr_list = song_ids[i:i+100]    
             
             formatted = (",".join(abbr_list))
             resp = requests.get(f'https://api.spotify.com/v1/audio-features?ids={formatted}', headers = self.headers)
             data_json = resp.json()
             #print(data_json)
-            for j in data_json['audio_features']:
+            for i in data_json['audio_features']:
                 #print(i['speechiness'], i['danceability'], i['id'])
                 try:
                     c.execute(f'''UPDATE {table_name} 
                                   SET speechiness = ?, 
                                       danceability = ?
-                                  WHERE song_id = ?''', (j['speechiness'], j['danceability'], j['id']))
+                                  WHERE song_id = ?''', (i['speechiness'], i['danceability'], i['id']))
                     conn.commit()
                 except:
-                    print(j)
+                    print(i)
          
         return get_spotify_playlist.SQL_to_dataframe(f'{table_name}')
         
-       
-            
+        
+        else:
+            return 'length of song_ids is > 100, has to be divided' 
             
             
 class statistics(): 
