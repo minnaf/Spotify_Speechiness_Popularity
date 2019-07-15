@@ -17,8 +17,6 @@ class get_spotify_playlist():
         
     def get_playlist_SQL(self, playlist_id, table_name):
         '''takes in playlist_id and pulls from API, and returns SQL database '''
-        #headers_value = OAuth_token
-        #headers = 
         resp = requests.get(f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks?offset=0&limit=100', headers = self.headers)
         data_json = resp.json()
         #return data_json
@@ -55,6 +53,7 @@ class get_spotify_playlist():
     def SQL_to_dataframe(table_name):
         '''takes in SQL table_name and converts to pandas dataframe, returning the head of the dataframe'''
         df = pd.read_sql_query(f"SELECT * FROM {table_name}", conn, index_col='index')
+        df = df.drop_duplicates() 
         return df    
    
 
@@ -62,18 +61,14 @@ class get_spotify_playlist():
         '''takes in dataframe table and corresponding SQL table and returns dataframe with audio features for the songs'''
        
         song_ids = list(df['song_id'])
-        
-        
-        #if len(song_ids) < 100:
         for i in range(0, math.ceil(len(song_ids)/100)):
             abbr_list = song_ids[i:i+100]    
             
             formatted = (",".join(abbr_list))
             resp = requests.get(f'https://api.spotify.com/v1/audio-features?ids={formatted}', headers = self.headers)
             data_json = resp.json()
-            #print(data_json)
+            
             for j in data_json['audio_features']:
-                #print(i['speechiness'], i['danceability'], i['id'])
                 try:
                     c.execute(f'''UPDATE {table_name} 
                                   SET speechiness = ?, 
