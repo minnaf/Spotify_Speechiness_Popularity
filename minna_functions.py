@@ -29,7 +29,10 @@ class get_spotify_playlist():
                  [popularity] integer,
                  [artist_name] text,
                  [speechiness] float, 
-                 [danceability] float)''')
+                 [danceability] float, 
+                 [energy] float,
+                 [liveness] float, 
+                 [valence] float)''')
 
         
         for i in data_json['items']:  
@@ -72,8 +75,11 @@ class get_spotify_playlist():
                 try:
                     c.execute(f'''UPDATE {table_name} 
                                   SET speechiness = ?, 
-                                      danceability = ?
-                                  WHERE song_id = ?''', (j['speechiness'], j['danceability'], j['id']))
+                                      danceability = ?, 
+                                      energy = ?,
+                                      liveness = ?,
+                                      valence = ?
+                                  WHERE song_id = ?''', (j['speechiness'], j['danceability'], j['energy'], j['liveness'], j['valence'], j['id'],))
                     conn.commit()
                 except:
                     print(j)
