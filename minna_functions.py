@@ -89,10 +89,6 @@ class get_spotify_playlist():
        
             
             
-            
-class statistics(): 
-    pass
-        
     
     
     
